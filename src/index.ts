@@ -1,45 +1,56 @@
 import { promises as fs } from "fs";
-import { sortCssProperties } from "./utils";
-import splitStyles from "./utils/splitStyles";
+import {
+  convertArrayToObject,
+  convertStyleObjectToString,
+  minifyCSS,
+  sortCssProperties,
+  splitStyles,
+} from "./utils";
 
-const regex = /`([^`]*)`/g;
+const delimiter = "`;";
 const filePath = "./input/SpotlightCarouselStyles.ts";
-const outputFile = "./output/SpotlightCarouselStyles.txt";
+const outputFile = "./output/SpotlightCarouselStyles.ts";
 
-async function processStyles() {
+const processStyles = async () => {
   try {
     const content = await fs.readFile(filePath, "utf-8");
-    const matched = content.match(regex);
+    const minifiedCss = minifyCSS(content);
 
-    if (!matched) {
-      console.log("No styles found in the file.");
-      return;
+    const extractSubstrings = (minifiedCss, delimiter) =>
+      minifiedCss
+        .split(delimiter)
+        .map((substring, index, substrings) => {
+          if (index < substrings.length - 1) {
+            return substring + delimiter;
+          } else {
+            return substring;
+          }
+        })
+        .map((substring) => substring.trim())
+        .filter((substring) => substring);
+
+    const substrings = extractSubstrings(minifiedCss, delimiter);
+
+    const styles = convertArrayToObject(substrings);
+
+    for (const styleKey in styles) {
+      const styleArray = splitStyles(styles[styleKey])
+        .split(";")
+        .filter((line) => line.trim())
+        .map((property) => property.trim().split(":"))
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: `${value};` }), {});
+
+      styles[styleKey] = `\`\n  ${sortCssProperties(styleArray)}\n\`;`;
     }
 
-    const unpreparedString = matched.join("\n");
-    const styles = unpreparedString
-      .trim()
-      .split("`")
-      .filter((i) => i.trim())
-      .map((str) => str.replace(/^\s*$[\n\r]{1,}/gm, ""))
-      .join("\n");
-
-    const styleArray = splitStyles(styles).map((styleBlock) =>
-      styleBlock
-        .split("\n")
-        .filter((line) => line.trim())
-        .map((line) => line.trim().split(":"))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value.trim() }), {})
-    );
-
-    const sortedStyles = styleArray.map(sortCssProperties);
-    await fs.writeFile(outputFile, sortedStyles.join("\n\n"), {
+    const resultStyles = convertStyleObjectToString(styles);
+    await fs.writeFile(outputFile, resultStyles, {
       encoding: "utf-8",
     });
     console.log(`Processed styles written to ${outputFile}.`);
   } catch (error) {
     console.error("An error occurred while processing styles:", error);
   }
-}
+};
 
 processStyles();

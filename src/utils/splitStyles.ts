@@ -1,17 +1,22 @@
-const splitStyles = styles => styles
-    .split('\n')
-    .reduce((result, line) => {
+const splitStyles = (styles) =>
+  styles
+    .split("\n")
+    .reduce(
+      (result, line) => {
         const trimmedLine = line.trim();
         if (trimmedLine.length === 0) {
-            // Empty line, start a new group
-            result.push('');
+          // Empty line, start a new group
+          result.push("");
         } else {
-            // Add line to current group
-            const currentGroup = result[result.length - 1];
-            result[result.length - 1] = currentGroup + line + '\n';
+          // Add line to current group
+          const currentGroup = result[result.length - 1];
+          result[result.length - 1] = currentGroup + line + "\n";
         }
         return result;
-    }, [''])
-    .filter(group => group.trim().length > 0);
+      },
+      [""]
+    )
+    .filter((group) => group.trim().length > 0)
+    .join("");
 
-export default splitStyles
+export default splitStyles;
