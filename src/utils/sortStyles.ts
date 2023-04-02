@@ -13,6 +13,8 @@ const sortStyles = (node: INode) => {
   for (const child of node.children) {
     sortStyles(child);
   }
+
+  console.log(node);
 };
 
 export default sortStyles;

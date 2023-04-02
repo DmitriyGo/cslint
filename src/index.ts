@@ -24,7 +24,7 @@ async function processStyles() {
     // Sort styles in each component
     components.forEach(sortStyles);
 
-    console.log(components);
+    // console.log(components);
 
     // Create style strings for each component
     const styleStrings = components.map(createStyleString);
