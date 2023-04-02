@@ -1,56 +1,47 @@
 import { promises as fs } from "fs";
 import {
-  convertArrayToObject,
-  convertStyleObjectToString,
-  minifyCSS,
-  sortCssProperties,
-  splitStyles,
+  createStyleString,
+  parseStyledComponent,
+  sortStyles,
+  splitStyledComponentsFile,
 } from "./utils";
 
-const delimiter = "`;";
-const filePath = "./input/SpotlightCarouselStyles.ts";
-const outputFile = "./output/SpotlightCarouselStyles.ts";
+// Constants
+const INPUT_FILE_PATH = "./input/SpotlightCarouselItemStyles.ts";
+const OUTPUT_FILE_PATH = "./output/SpotlightCarouselItemStyles.ts";
 
-const processStyles = async () => {
+async function processStyles() {
   try {
-    const content = await fs.readFile(filePath, "utf-8");
-    const minifiedCss = minifyCSS(content);
+    // Read input file
+    const data = await fs.readFile(INPUT_FILE_PATH, "utf-8");
 
-    const extractSubstrings = (minifiedCss, delimiter) =>
-      minifiedCss
-        .split(delimiter)
-        .map((substring, index, substrings) => {
-          if (index < substrings.length - 1) {
-            return substring + delimiter;
-          } else {
-            return substring;
-          }
-        })
-        .map((substring) => substring.trim())
-        .filter((substring) => substring);
+    // Split file into header and content
+    const [header, content] = splitStyledComponentsFile(data);
 
-    const substrings = extractSubstrings(minifiedCss, delimiter);
+    // Parse styled components
+    const components = parseStyledComponent(content);
 
-    const styles = convertArrayToObject(substrings);
+    // Sort styles in each component
+    components.forEach(sortStyles);
 
-    for (const styleKey in styles) {
-      const styleArray = splitStyles(styles[styleKey])
-        .split(";")
-        .filter((line) => line.trim())
-        .map((property) => property.trim().split(":"))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: `${value};` }), {});
+    console.log(components);
 
-      styles[styleKey] = `\`\n  ${sortCssProperties(styleArray)}\n\`;`;
-    }
+    // Create style strings for each component
+    const styleStrings = components.map(createStyleString);
 
-    const resultStyles = convertStyleObjectToString(styles);
-    await fs.writeFile(outputFile, resultStyles, {
-      encoding: "utf-8",
-    });
-    console.log(`Processed styles written to ${outputFile}.`);
+    // Write output file
+    await fs.writeFile(
+      OUTPUT_FILE_PATH,
+      `${header}${styleStrings.join("\n\n")}`,
+      {
+        encoding: "utf-8",
+      }
+    );
+    console.log(`Processed styles written to ${OUTPUT_FILE_PATH}.`);
   } catch (error) {
     console.error("An error occurred while processing styles:", error);
   }
-};
+}
 
+// Run main function
 processStyles();

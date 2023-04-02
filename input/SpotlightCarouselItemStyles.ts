@@ -1,5 +1,19 @@
 import styled from "styled-components";
 
+export const StyledSpotlightsContent = styled.div<{
+  total: number;
+  current: number;
+}>`
+  z-index: 1;
+  height: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(${({ total }) => total}, 100%);
+  width: ${({ total }) => total * 100}%;
+  transform: translateX(-${({ current }) => current * 100}%);
+  transition: transform 1s ease-in-out;
+`;
+
 export const StyledCarouselItem = styled.div<{ imageUrl: string }>`
   position: relative;
   height: 100%;
@@ -17,6 +31,13 @@ export const StyledCarouselItem = styled.div<{ imageUrl: string }>`
     content: "";
     position: absolute;
     top: 0;
+
+    > * {
+      color: black;
+      background-position: center;
+      float: left;
+    }
+
     left: 0;
     width: 100%;
     height: 100%;
